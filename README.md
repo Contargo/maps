@@ -13,3 +13,7 @@ You can find all necessary information about the converting at the [OpenStreetMa
 ### pbf -> osm
 
 `osmconvert processed.osm.pbf -o=processed.osm`
+
+## Licensing
+
+Data/Maps Copyright 2015 [CONTARGO](http://www.contargo.net) and [OpenStreetMap Contributors](http://www.openstreetmap.org) | [Map tiles: Creative Commons BY-SA 2.0](http://creativecommons.org/licenses/by-sa/2.0/) [Data: ODbL 1.0](http://opendatacommons.org/licenses/odbl/)
