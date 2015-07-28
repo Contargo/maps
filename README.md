@@ -1,4 +1,4 @@
-# Maps
+# Contargo Maps Server
 
 This repository provides all information to set up a Contargo maps server containing the [Open Source Routing Machine (OSRM)](https://github.com/Project-OSRM/) and [Nominatim](http://www.nominatim.org/) and use this services from [IRIS](https://github.com/Contargo/iris)
 
