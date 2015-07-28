@@ -6,7 +6,7 @@ This repository provides all information to set up a Contargo maps server contai
 
 Install OSRM in version 4.4.0 following the instructions on [Building OSRM](https://github.com/Project-OSRM/osrm-backend/wiki/Building-OSRM).
 
-Now OSRM is able to extract the road network from our preprocessed map data with the truck profile to create the hierarchy to find the shortest path between two points on the map. All instructions are provided on [Running OSRM](https://github.com/Project-OSRM/osrm-backend/wiki/Running-OSRM)
+Now OSRM is able to extract the road network from our [preprocessed map data](#map-data) with the truck profile to create the hierarchy to find the shortest path between two points on the map. All instructions are provided on [Running OSRM](https://github.com/Project-OSRM/osrm-backend/wiki/Running-OSRM)
 
 Configurations of the OSRM service (osrm-routed) can be made by a configuration file. All configuration parameter are available under [OSRM routed](https://github.com/Project-OSRM/osrm-backend/wiki/osrm-routed.1)
 
