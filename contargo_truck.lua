@@ -1,9 +1,3 @@
---[[
-      !!!!! Don't touch me, I'm Puppet-managed !!!!!
-     please contact admin@synyx.de if you need changes
---]]
-
-
 --
 -- Contargo Truck Profile
 --
@@ -17,7 +11,6 @@ access_tags = { "motorcar" }
 -- Following ways will be deleted to change routing for 2015
 -- Remove this for map update 2016 (or if access:destination is respected again in osrm)
 --
-
 ways_to_delete = { ["210337564"] = true, ["4473096"] = true, ["34692847"] = true, ["34692851"] = true, ["84632578"] = true, ["146797257"] = true, ["4471601"] = true, ["4471600"] = true, ["24463383"] = true, ["237897875"] = true }
 
 speed_profile = {
@@ -37,9 +30,7 @@ speed_profile = {
   ["default"] = 10
 }
 
-
 traffic_signal_penalty  = 10800
-
 
 -- these settings are read directly by osrm
 obey_oneway             = true
@@ -64,21 +55,17 @@ function node_function (node)
   if node.tags:Holds("barrier") then
     node.bollard = true
   end
-
 end
 
 
 --[[ preparing ways --]]
 function way_function (way)
 
-
-
   -- 1. use fast fail if it is not possible to route on this way 
   local is_highway = way.tags:Holds("highway")
   local is_route = way.tags:Holds("route")
 
   local delete_way = ways_to_delete[way.tags:Find("id")]
-
 
   -- if it is not a route or a highway, then stop here
   if not (is_highway or is_route) or delete_way then
@@ -141,6 +128,7 @@ function way_function (way)
 
   return
 end
+
 
 -- These are wrappers to parse vectors of nodes and ways and thus to speed up any tracing JIT
 function node_vector_function(vector)
