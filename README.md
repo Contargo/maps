@@ -25,6 +25,17 @@ Recommended: PostgreSQL 9.3.5
 Expose the OSRM service to "http://yourdomain.de/nominatim" for example. So IRIS will be able to use Nominatim as a service.
 
 
+## IRIS
+
+IRIS can be downloaded in [here](https://github.com/Contargo/iris).
+
+To use your own map server with OSRM and Nominatim from IRIS you have to change two properties located in the *application.properties*
+
+* nominatim.base.url=http://yourdomain.de/nominatim/
+* osrm.url=http://yourdomain.de/osrm/viaroute
+
+If you exposed OSRM and Nominatim correctly on the proposed urls described above than IRIS can use OSRM and Nominatim.
+
 ## Map Data
 
 The processed map data for truck routing can be downloaded [here](http://maps.contargo.net/maps/). The map data is available in the [osm format](http://wiki.openstreetmap.org/wiki/OSM_XML). This format is human readable and can be versioned in a git repository. If you need this data in the [pbf format](http://wiki.openstreetmap.org/wiki/PBF_Format) you may convert it. That is very easy and you can find the description below.
