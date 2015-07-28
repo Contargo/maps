@@ -4,11 +4,11 @@ This repository provides all information to set up a Contargo maps server contai
 
 ## OSRM
 
-Install OSRM in version 4.4.0 for your operation system following the instructions on [Building OSRM](https://github.com/Project-OSRM/osrm-backend/wiki/Building-OSRM).
+Install OSRM in version 4.4.0 following the instructions on [Building OSRM](https://github.com/Project-OSRM/osrm-backend/wiki/Building-OSRM).
 
 Now OSRM is able to extract the road network from our preprocessed map data with the truck profile to create the hierarchy to find the shortest path between two points on the map. All instructions are provided on [Running OSRM](https://github.com/Project-OSRM/osrm-backend/wiki/Running-OSRM)
 
-Configuration of the OSRM service (osrm-routed) can be made by a configuration file. All configuration parameter are available under [OSRM routed](https://github.com/Project-OSRM/osrm-backend/wiki/osrm-routed.1)
+Configurations of the OSRM service (osrm-routed) can be made by a configuration file. All configuration parameter are available under [OSRM routed](https://github.com/Project-OSRM/osrm-backend/wiki/osrm-routed.1)
 
 Expose the OSRM service to "http://yourdomain.de/osrm" for example. So IRIS will be able to use OSRM as a service.
 
@@ -22,10 +22,12 @@ Install Nominatim v2.3.0 with the instructions provided at [Nominatim.org](http:
 
 Recommended: PostgreSQL 9.3.5
 
+Expose the OSRM service to "http://yourdomain.de/nominatim" for example. So IRIS will be able to use Nominatim as a service.
+
 
 ## Map Data
 
-This repository provides informationen about the processed map data for truck routing. The map data is available in the [osm format](http://wiki.openstreetmap.org/wiki/OSM_XML). This format is human readable and can be versioned in a git repository. If you need this data in the [pbf format](http://wiki.openstreetmap.org/wiki/PBF_Format) you may convert it. That is very easy and you can find the description below.
+The processed map data for truck routing can be downloaded [here](http://maps.contargo.net/maps/). The map data is available in the [osm format](http://wiki.openstreetmap.org/wiki/OSM_XML). This format is human readable and can be versioned in a git repository. If you need this data in the [pbf format](http://wiki.openstreetmap.org/wiki/PBF_Format) you may convert it. That is very easy and you can find the description below.
 
 ## Convert
 
