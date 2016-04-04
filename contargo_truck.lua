@@ -11,7 +11,7 @@ access_tags = { "motorcar" }
 -- Following ways will be deleted to change routing for 2015
 -- Remove this for map update 2016 (or if access:destination is respected again in osrm)
 --
-ways_to_delete = { ["210337564"] = true, ["4473096"] = true, ["34692847"] = true, ["34692851"] = true, ["84632578"] = true, ["146797257"] = true, ["4471601"] = true, ["4471600"] = true, ["24463383"] = true, ["237897875"] = true }
+ways_to_delete = { ["210337564"] = true, ["4473096"] = true, ["34692847"] = true, ["34692851"] = true, ["84632578"] = true, ["146797257"] = true, ["4471601"] = true, ["4471600"] = true, ["24463383"] = true, ["237897875"] = true, ["371493267"] =  true }
 
 speed_profile = {
   ["motorway"] = 75,
