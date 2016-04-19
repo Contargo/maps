@@ -14,7 +14,7 @@ access_tags_hierachy = { "hgv", "motor_vehicle", "vehicle", "access" }
 -- Remove this for map update 2016 (or if access:destination is respected again in osrm)
 --
 
-ways_to_delete = { ["210337564"] = true, ["4473096"] = true, ["34692847"] = true, ["34692851"] = true, ["84632578"] = true, ["146797257"] = true, ["4471601"] = true, ["4471600"] = true, ["24463383"] = true, ["237897875"] = true, ["371493267"] =  true }
+ways_to_delete = { ["210337564"] = true, ["4473096"] = true, ["34692847"] = true, ["34692851"] = true, ["84632578"] = true, ["146797257"] = true, ["4471601"] = true, ["4471600"] = true, ["24463383"] = true, ["237897875"] = true, ["371493267"] =  true, ["184874847"] = true, ["47085444"] = true, ["155432775"] = true, ["377733305"] = true, ["40871380"] = true, ["56475656"] = true, ["69990733"] = true, ["255800753"] = true, ["150301316"] = true, ["77056714"] = true, ["42920665"] = true, ["26244638"] = true, ["40794043"] = true, ["215311114"] = true, ["26492587"] = true, ["256055076"] = true }
 
 speed_profile = {
   ["motorway"] = 75,
