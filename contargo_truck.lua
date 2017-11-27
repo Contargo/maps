@@ -1,3 +1,9 @@
+--[[
+      !!!!! Don't touch me, I'm Puppet-managed !!!!!
+     please contact admin@synyx.de if you need changes
+--]]
+
+
 --
 -- Contargo Truck Profile
 --
@@ -10,11 +16,10 @@ access_tag_restricted = { ["destination"] = true, ["private"] = true, ["delivery
 access_tags_hierachy = { "hgv", "motor_vehicle", "vehicle", "access" }
 
 --
--- Following ways will be deleted to change routing for 2015
--- Remove this for map update 2016 (or if access:destination is respected again in osrm)
+-- Following ways will be deleted
 --
 
-ways_to_delete = { ["210337564"] = true, ["4473096"] = true, ["34692847"] = true, ["34692851"] = true, ["84632578"] = true, ["146797257"] = true, ["4471601"] = true, ["4471600"] = true, ["24463383"] = true, ["237897875"] = true, ["184874847"] = true, ["47085444"] = true, ["155432775"] = true, ["377733305"] = true, ["40871380"] = true, ["56475656"] = true, ["69990733"] = true, ["255800753"] = true, ["150301316"] = true, ["77056714"] = true, ["42920665"] = true, ["26244638"] = true, ["40794043"] = true, ["215311114"] = true, ["26492587"] = true, ["256055076"] = true, ["119053038"] = true, ["366552544"] = true }
+ways_to_delete = { ["255800753"] = true, ["26244638"] = true, ["42920665"] = true, ["26492587"] = true, ["215311114"] = true, ["119053038"] = true, ["210337564"] = true, ["4473096"] = true, ["34692847"] = true, ["34692851"] = true, ["146797257"] = true, ["4471601"] = true, ["4471600"] = true, ["24463383"] = true, ["237897875"] = true, ["47085444"] = true }
 
 speed_profile = {
   ["motorway"] = 75,
@@ -34,21 +39,20 @@ speed_profile = {
 }
 
 
-traffic_signal_penalty  = 10800
+properties.traffic_signal_penalty  = 2
+properties.use_turn_restrictions   = true
+properties.weight_name             = 'duration'
+properties.u_turn_penalty          = 20
 
+local access_destination_weight = 100000
+local swiss_border_penalty      = 10800 -- 3 hours
 
 -- these settings are read directly by osrm
-obey_oneway             = true
-obey_bollards           = true
-take_minimum_of_speeds  = false
-use_turn_restrictions   = true
-u_turn_penalty          = 20
-ignore_areas            = true
-
-
+local obey_oneway             = true
+local ignore_areas            = true
 --[[ preparing nodes --]]
 function node_function (node, result)
-  
+
   -- flag node if it carries a traffic light
   local tag = node:get_value_by_key("highway")
   if tag and "traffic_signals" == tag then
@@ -98,7 +102,6 @@ function numberFromTagValue(value)
   if value == nil then
     return 0
   end
-
   local n = tonumber(value:match("%d.%d*"))
   if n == nil then
     n = 0
@@ -113,6 +116,7 @@ end
 
 --[[ preparing ways --]]
 function way_function (way, result)
+
 
   -- 1. use fast fail if it is not possible to route on this way 
   local is_highway = not isNilOrEmpty(way:get_value_by_key("highway"))
@@ -140,6 +144,10 @@ function way_function (way, result)
   local oneway = way:get_value_by_key("oneway")
   local junction = way:get_value_by_key("junction")
   local service = way:get_value_by_key("service")
+  local crossing = way:get_value_by_key("crossing")
+
+  result.forward_mode = mode.driving
+  result.backward_mode = mode.driving
 
   -- fail fast if highway has no value
   if "" == highway then
@@ -166,15 +174,16 @@ function way_function (way, result)
   end
 
   local maxweight = numberFromTagValue(way:get_value_by_key("maxweight"))
+  local way_id = way:get_value_by_key("id")
   if 0 < maxweight then
-    if maxweight <= 40 then
+    -- Do not set restriction for Schmickbruecke
+    if maxweight <= 40 and way_id ~= "371493267" then
       return
     end
   end
 
-  -- Set access restriction flag if access is allowed under certain restrictions only
   if access ~= "" and access_tag_restricted[access] then
-    result.is_access_restricted = true
+    result.weight = access_destination_weight
   end
 
   -- Set access restriction flag if service is allowed under certain restrictions only
@@ -191,10 +200,14 @@ function way_function (way, result)
     end
   end
 
-  -- define the speed for the given way
-  local speed = speed_profile[highway] or speed_profile['default']
-  result.forward_speed = speed
-  result.backward_speed = speed
+  if crossing == "border" then
+    result.duration = swiss_border_penalty
+  else
+    -- define the speed for the given way
+    local speed = speed_profile[highway] or speed_profile['default']
+    result.forward_speed = speed
+    result.backward_speed = speed
+  end
 
   -- Set the name that will be used for instructions
   local name = way:get_value_by_key("name")
