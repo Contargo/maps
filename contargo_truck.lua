@@ -1,222 +1,285 @@
---[[
-      !!!!! Don't touch me, I'm Puppet-managed !!!!!
-     please contact admin@synyx.de if you need changes
---]]
+api_version = 2
 
+Set = require('lib/set')
+Sequence = require('lib/sequence')
+Handlers = require("lib/way_handlers")
+find_access_tag = require("lib/access").find_access_tag
+limit = require("lib/maxspeed").limit
+ContargoWayHandlers = require('contargo_way_handlers')
 
---
--- Contargo Truck Profile
---
+function setup()
+  local use_left_hand_driving = false
+  return {
+    properties = {
+      max_speed_for_map_matching     = 180/3.6,       -- 180kmph -> m/s
+      left_hand_driving              = use_left_hand_driving,
+      weight_name                    = 'routability', -- routing based on duration, but weighted for preferring certain roads
+      process_call_tagless_node      = false,
+      u_turn_penalty                 = 20,
+      continue_straight_at_waypoint  = true,
+      use_turn_restrictions          = true,
+      traffic_light_penalty          = 2,
+      swiss_border_penalty           = 10800,         -- 3 hours
+      swiss_border_weight            = 500000,
+      access_destination_weight      = 100000
+    },
 
-ignore_in_grid = { ["ferry"] = true }
-service_tag_restricted = { ["parking_aisle"] = true }
+    default_mode              = mode.driving,
+    default_speed             = 10,
+    oneway_handling           = true,
+    side_road_multiplier      = 0.8,
+    turn_penalty              = 7.5,
+    turn_bias   = use_left_hand_driving and 1/1.075 or 1.075, -- biases right-side driving
 
-access_tag_blacklist = { ["no"] = true }
-access_tag_restricted = { ["destination"] = true, ["private"] = true, ["delivery"] = true }
-access_tags_hierachy = { "hgv", "motor_vehicle", "vehicle", "access" }
+    suffix_list = { -- a list of suffixes to suppress in name change instructions
+      'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW', 'North', 'South', 'West', 'East'
+    },
 
---
--- Following ways will be deleted
---
+    barrier_whitelist = Set {
+    },
 
-ways_to_delete = { ["255800753"] = true, ["26244638"] = true, ["42920665"] = true, ["26492587"] = true, ["215311114"] = true, ["119053038"] = true, ["210337564"] = true, ["4473096"] = true, ["34692847"] = true, ["34692851"] = true, ["146797257"] = true, ["4471601"] = true, ["4471600"] = true, ["24463383"] = true, ["237897875"] = true, ["47085444"] = true }
+    access_tag_whitelist = Set {
+      'yes',
+      'hgv',
+      'motor_vehicle',
+      'vehicle',
+      'permissive',
+      'designated',
+      'hov'
+    },
 
-speed_profile = {
-  ["motorway"] = 75,
-  ["motorway_link"] = 60,
-  ["trunk"] = 60,
-  ["trunk_link"] = 45,
-  ["primary"] = 45,
-  ["secondary"] = 30,
-  ["secondary_link"] = 15,
-  ["tertiary"] = 15,
-  ["tertiary_link"] = 10,
-  ["unclassified"] = 10,
-  ["residential"] = 8,
-  ["living_street"] = 3,
-  ["service"] = 3,
-  ["default"] = 10
-}
+    access_tag_blacklist = Set {
+      'no',
+      'private',
+      'delivery',
+      'destination'
+    },
 
+    restricted_access_tag_list = Set {
+      'destination',
+      'delivery',
+      'private'
+    },
 
-properties.traffic_signal_penalty  = 2
-properties.use_turn_restrictions   = true
-properties.weight_name             = 'duration'
-properties.u_turn_penalty          = 20
+    access_tags_hierarchy = Sequence {
+      'hgv',
+      'motor_vehicle',
+      'vehicle',
+      'access'
+    },
 
-local access_destination_weight = 100000
-local swiss_border_penalty      = 10800 -- 3 hours
+    service_tag_forbidden = Set {
+      'emergency_access'
+    },
 
--- these settings are read directly by osrm
-local obey_oneway             = true
-local ignore_areas            = true
---[[ preparing nodes --]]
-function node_function (node, result)
+    restrictions = Sequence {
+      'hgv',
+      'motor_vehicle',
+      'vehicle'
+    },
 
-  -- flag node if it carries a traffic light
-  local tag = node:get_value_by_key("highway")
-  if tag and "traffic_signals" == tag then
-    result.traffic_lights = true;
+    avoid = Set {
+      'area',
+      'reversible',
+      'impassable',
+      'hov_lanes',
+      'steps',
+      'construction',
+      'proposed'
+    },
+
+    speeds = Sequence {
+      highway = {
+        motorway        = 75,
+        motorway_link   = 60,
+        trunk           = 60,
+        trunk_link      = 45,
+        primary         = 45,
+        primary_link    = 40,
+        secondary       = 30,
+        secondary_link  = 15,
+        tertiary        = 15,
+        tertiary_link   = 10,
+        unclassified    = 10,
+        residential     = 8,
+        living_street   = 3,
+        service         = 3
+      }
+    },
+
+    service_penalties = {},
+
+    restricted_highway_whitelist = Set {
+      'motorway',
+      'motorway_link',
+      'trunk',
+      'trunk_link',
+      'primary',
+      'primary_link',
+      'secondary',
+      'secondary_link',
+      'tertiary',
+      'tertiary_link',
+      'residential',
+      'living_street'
+    },
+
+    construction_whitelist = Set {
+      'no',
+      'widening',
+      'minor'
+    },
+
+    route_speeds = {
+      ferry = 0,
+      shuttle_train = 0
+    },
+
+    bridge_speeds = {
+      movable = 5
+    },
+
+    ways_to_delete = Set {
+      '255800753',
+      '26244638',
+      '42920665',
+      '26492587',
+      '215311114',
+      '119053038',
+      '210337564',
+      '4473096',
+      '34692847',
+      '34692851',
+      '146797257',
+      '4471601',
+      '4471600',
+      '24463383',
+      '237897875',
+      '47085444'
+    }
+  }
+end
+
+function process_node(profile, node, result)
+  -- parse barrier tags
+  local barrier = node:get_value_by_key("barrier")
+  if barrier then
+    result.barrier = true
   end
 
-  local maxwidth = numberFromTagValue(node:get_value_by_key("maxwidth"))
+  -- check if node is a traffic light
+  local tag = node:get_value_by_key("highway")
+  if "traffic_signals" == tag then
+    result.traffic_lights = true
+  end
+
+  local maxwidth = ContargoWayHandlers.numberFromTagValue(node:get_value_by_key("maxwidth"))
   if 0 < maxwidth then
     if maxwidth <= 2.5 then
       result.barrier = true
     end
   end
 
-  local maxheight = numberFromTagValue(node:get_value_by_key("maxheight"))
+  local maxheight = ContargoWayHandlers.numberFromTagValue(node:get_value_by_key("maxheight"))
   if 0 < maxheight then
     if maxheight < 4 then
       result.barrier = true
     end
   end
 
-  local maxweight = numberFromTagValue(node:get_value_by_key("maxweight"))
+  local maxweight = ContargoWayHandlers.numberFromTagValue(node:get_value_by_key("maxweight"))
   if 0 < maxweight then
     if maxweight <= 40 then
       result.barrier = true
     end
   end
-
-  local isBarrier = not isNilOrEmpty(node:get_value_by_key("barrier"))
-  if isBarrier then
-    result.barrier = true
-  end
-
 end
 
-function getAccessFromTagHierarchy(source, hierarchy)
-  for i,v in ipairs(hierarchy) do
-    local tag = source:get_value_by_key(v)
-    if tag and tag ~= '' then
-      return tag
-    end
-  end
+function process_way(profile, way, result)
+  -- data table for storing intermediate values during processing
+  local data = {
+    highway = way:get_value_by_key('highway'),
+    bridge = way:get_value_by_key('bridge'),
+    route = way:get_value_by_key('route'),
+    crossing = way:get_value_by_key('crossing'),
+    access = way:get_value_by_key('access')
+  }
 
-  return ""
-end
-
-function numberFromTagValue(value)
-  if value == nil then
-    return 0
-  end
-  local n = tonumber(value:match("%d.%d*"))
-  if n == nil then
-    n = 0
-  end
-
-  return math.abs(n)
-end
-
-function isNilOrEmpty(arg)
-  return arg == nil or arg == ""
-end
-
---[[ preparing ways --]]
-function way_function (way, result)
-
-
-  -- 1. use fast fail if it is not possible to route on this way 
-  local is_highway = not isNilOrEmpty(way:get_value_by_key("highway"))
-  local is_route =   not isNilOrEmpty(way:get_value_by_key("route"))
-
-  local delete_way = ways_to_delete[way:get_value_by_key("id")]
-
-
-  -- if it is not a route or a highway, then stop here
-  if not (is_highway or is_route) or delete_way then
+  -- perform an quick initial check and abort if the way is obviously not routable
+  -- highway or route tags must be in data table, bridge is optional
+  if (not data.highway or data.highway == '') and (not data.route or data.route == '') then
     return
   end
 
-  -- do not route over areas
-  local is_area = not isNilOrEmpty(way:get_value_by_key("area"))
-  if ignore_areas and is_area then
-    local area = way:get_value_by_key("area")
-    if "yes" == area then
-      return
+  handlers = Sequence {
+    WayHandlers.default_mode,
+    ContargoWayHandlers.delete_way,
+    WayHandlers.blocked_ways,
+    ContargoWayHandlers.width_height_weight,
+    WayHandlers.access,
+    WayHandlers.oneway,
+    WayHandlers.destinations,
+    WayHandlers.ferries,
+    WayHandlers.movables,
+    WayHandlers.service,
+    WayHandlers.speed,
+    WayHandlers.penalties,
+    WayHandlers.classes,
+    WayHandlers.turn_lanes,
+    WayHandlers.classification,
+    WayHandlers.roundabouts,
+    WayHandlers.startpoint,
+    WayHandlers.names,
+    WayHandlers.weights,
+    ContargoWayHandlers.verkehrsverbot,
+    ContargoWayHandlers.access_destination,
+    ContargoWayHandlers.swiss_border
+  }
+
+  WayHandlers.run(profile,way,result,data,handlers)
+end
+
+function process_turn(profile, turn)
+  -- Use a sigmoid function to return a penalty that maxes out at turn_penalty
+  -- over the space of 0-180 degrees.  Values here were chosen by fitting
+  -- the function to some turn penalty samples from real driving.
+  local turn_penalty = profile.turn_penalty
+  local turn_bias = profile.turn_bias
+
+  if turn.has_traffic_light then
+      turn.duration = profile.properties.traffic_light_penalty
+  end
+
+  if turn.turn_type ~= turn_type.no_turn then
+    if turn.angle >= 0 then
+      turn.duration = turn.duration + turn_penalty / (1 + math.exp( -((13 / turn_bias) *  turn.angle/180 - 6.5*turn_bias)))
+    else
+      turn.duration = turn.duration + turn_penalty / (1 + math.exp( -((13 * turn_bias) * -turn.angle/180 - 6.5/turn_bias)))
+    end
+
+    if turn.direction_modifier == direction_modifier.u_turn then
+      turn.duration = turn.duration + profile.properties.u_turn_penalty
     end
   end
 
-  -- 2. when its possible to route in this way, add further information for osrm 
-  local highway = way:get_value_by_key("highway")
-  local oneway = way:get_value_by_key("oneway")
-  local junction = way:get_value_by_key("junction")
-  local service = way:get_value_by_key("service")
-  local crossing = way:get_value_by_key("crossing")
-
-  result.forward_mode = mode.driving
-  result.backward_mode = mode.driving
-
-  -- fail fast if highway has no value
-  if "" == highway then
-    return
-  end
-
-  local access = getAccessFromTagHierarchy(way, access_tags_hierachy)
-  if access_tag_blacklist[access] then
-    return
-  end
-
-  local maxwidth = numberFromTagValue(way:get_value_by_key("maxwidth"))
-  if 0 < maxwidth then
-    if maxwidth <= 2.5 then
-      return
-    end
-  end
-
-  local maxheight = numberFromTagValue(way:get_value_by_key("maxheight"))
-  if 0 < maxheight then
-    if maxheight < 4 then
-      return
-    end
-  end
-
-  local maxweight = numberFromTagValue(way:get_value_by_key("maxweight"))
-  local way_id = way:get_value_by_key("id")
-  if 0 < maxweight then
-    -- Do not set restriction for Schmickbruecke
-    if maxweight <= 40 and way_id ~= "371493267" then
-      return
-    end
-  end
-
-  if access ~= "" and access_tag_restricted[access] then
-    result.weight = access_destination_weight
-  end
-
-  -- Set access restriction flag if service is allowed under certain restrictions only
-  if service ~= "" and service_tag_restricted[service] then
-    result.is_access_restricted = true
-  end
-
-  -- Set direction according to tags on way
-  if obey_oneway then
-    if oneway == "-1" then
-      result.forward_mode = 0
-    elseif (oneway == "yes" or oneway == "1" or oneway == "true") or junction == "roundabout" or (highway == "motorway_link" and oneway ~="no") or (highway == "motorway" and oneway ~= "no") then
-      result.backward_mode = 0
-    end
-  end
-
-  if crossing == "border" then
-    result.duration = swiss_border_penalty
+  -- for distance based routing we don't want to have penalties based on turn angle
+  if profile.properties.weight_name == 'distance' then
+     turn.weight = 0
   else
-    -- define the speed for the given way
-    local speed = speed_profile[highway] or speed_profile['default']
-    result.forward_speed = speed
-    result.backward_speed = speed
+     turn.weight = turn.duration
   end
 
-  -- Set the name that will be used for instructions
-  local name = way:get_value_by_key("name")
-  result.name = name
-
-  -- Override general direction settings of there is a specific one for our mode of travel
-  if ignore_in_grid[highway] ~= nil and ignore_in_grid[highway] then
-    result.ignore_in_grid = true
+  if profile.properties.weight_name == 'routability' then
+      -- penalize turns from non-local access only segments onto local access only tags
+      if not turn.source_restricted and turn.target_restricted then
+          turn.weight = constants.max_turn_weight
+      end
   end
-
-  return
 end
+
+return {
+  setup = setup,
+  process_way = process_way,
+  process_node = process_node,
+  process_turn = process_turn
+}
