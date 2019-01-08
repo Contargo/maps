@@ -20,8 +20,7 @@ function setup()
       use_turn_restrictions          = true,
       traffic_light_penalty          = 2,
       swiss_border_penalty           = 10800,         -- 3 hours
-      swiss_border_weight            = 500000,
-      access_destination_weight      = 100000
+      swiss_border_weight            = 500000
     },
 
     default_mode              = mode.driving,
@@ -155,7 +154,8 @@ function setup()
       '4471600',
       '24463383',
       '237897875',
-      '47085444'
+      '47085444',
+      '103431147'
     }
   }
 end
@@ -232,7 +232,6 @@ function process_way(profile, way, result)
     WayHandlers.names,
     WayHandlers.weights,
     ContargoWayHandlers.verkehrsverbot,
-    ContargoWayHandlers.access_destination,
     ContargoWayHandlers.swiss_border
   }
 

@@ -4,7 +4,7 @@ This repository provides all information to set up a Contargo maps server contai
 
 ## OSRM
 
-Install OSRM in version 5.12 following the instructions on [Building OSRM](https://github.com/Project-OSRM/osrm-backend/wiki/Building-OSRM).
+Install OSRM in version 5.19 following the instructions on [Building OSRM](https://github.com/Project-OSRM/osrm-backend/wiki/Building-OSRM).
 
 Now OSRM is able to extract the road network from our [preprocessed map data](#map-data) with the [truck profile](./contargo_truck.lua).
 
@@ -25,7 +25,7 @@ If you want a GUI for OSRM you can install [OSRM Frontend](https://github.com/Pr
 
 ## Nominatim
 
-Install Nominatim v2.3.0 with the instructions provided at [Nominatim.org](http://www.nominatim.org/). Use the unprocessed OSM map data. If you use the processed data you will not have all information in your data container. You can download unprocessed osm map data from [Geofabrik](http://download.geofabrik.de/)
+Install Nominatim v3.2.0 with the instructions provided at [Nominatim.org](http://www.nominatim.org/). Use the unprocessed OSM map data. If you use the processed data you will not have all information in your data container. You can download unprocessed osm map data from [Geofabrik](http://download.geofabrik.de/)
 
 Recommended: PostgreSQL 9.3
 

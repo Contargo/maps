@@ -37,12 +37,6 @@ function CustomWayHandlers.swiss_border(profile, way, result, data)
   end
 end
 
-function CustomWayHandlers.access_destination(profile, way, result, data)
-  if data.access and profile.restricted_access_tag_list[data.access] then
-    result.weight = profile.properties.access_destination_weight
-  end
-end
-
 function CustomWayHandlers.verkehrsverbot(profile, way, result, data)
   if verkehrsverbot.durchgangsverkehr(way) then
     result.weight = 100
